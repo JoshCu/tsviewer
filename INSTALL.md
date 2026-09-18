@@ -17,6 +17,8 @@ Building `tsviewer` requires:
 
 GTK3 normally brings in Cairo and the other graphical libraries required by the application.
 
+These are the requirements for building on Linux. Building a Windows executable is described separately under **Windows** below.
+
 ## Linux
 
 The exact package names depend on the Linux distribution.
@@ -124,6 +126,92 @@ Rebuild with:
 make
 ```
 
+## Windows
+
+A Windows executable is produced by cross-compiling on Linux with the mingw-w64 toolchain. There is no native Windows build procedure; the `Makefile` is not intended to be run under MSYS2 or Cygwin.
+
+### Cross-compilation requirements
+
+In addition to GNU Make, cross-compiling requires:
+
+- A mingw-w64 cross compiler targeting `x86_64-w64-mingw32`
+- `wget`
+- `unzip`
+
+The GTK3 headers and DLLs for Windows are downloaded automatically and do not need to be installed on the build machine.
+
+### openSUSE / SUSE Linux Enterprise
+
+```text
+sudo zypper install mingw64-cross-gcc wget unzip
+```
+
+### Fedora / RHEL-family distributions
+
+```text
+sudo dnf install mingw64-gcc wget unzip
+```
+
+### Debian / Ubuntu
+
+```text
+sudo apt install gcc-mingw-w64 wget unzip
+```
+
+### Verify the cross compiler
+
+```text
+x86_64-w64-mingw32-gcc --version
+```
+
+A version number should be printed. If the command is not found, the mingw-w64 package is either not installed or its compiler is published under a different name by the distribution.
+
+### Build
+
+```text
+make windows
+```
+
+The first invocation downloads a prebuilt GTK3 bundle for Windows, roughly 11 MB, and unpacks it into a `win32` directory. Subsequent builds reuse it.
+
+The result is a self-contained directory:
+
+```text
+dist-windows/
+```
+
+It contains `tsviewer.exe`, the GTK3 runtime DLLs it depends on, and a copy of the `examples` directory. The whole directory is what must be transferred to the Windows machine; `tsviewer.exe` will not start without the accompanying DLLs beside it.
+
+On Windows, run it from a command prompt in that directory:
+
+```text
+tsviewer.exe examples\model1_temperatures.csv
+```
+
+### Console window
+
+The Windows executable is built as a console application, so that `--help` and error messages appear in the command prompt as they do on Linux. A console window therefore accompanies the graphical window when the program is started from the desktop rather than from a command prompt.
+
+To build a pure graphical application with no console window, at the cost of losing all `--help` and error output:
+
+```text
+make windows WIN_SUBSYSTEM=-mwindows
+```
+
+### Clean the Windows build
+
+`make clean` removes `tsviewer.exe` and `dist-windows` but keeps the downloaded GTK3 bundle. To remove the bundle as well:
+
+```text
+make distclean
+```
+
+### Notes on the Windows build
+
+The prebuilt bundle supplies no icon theme, so a small number of stock icons in GTK dialogs may be absent. This is cosmetic and does not affect plotting or any other function.
+
+Timestamps earlier than 1970 are not accepted in the compact `YYYYMMDDHHMM` and `YYYYMMDDHHMMSS` formats on Windows, because the Windows C library cannot represent them. All other supported abscissa formats behave identically to the Linux build.
+
 ## Installation in your PATH
 
 It is not necessary to install `tsviewer` system-wide. The executable can be run directly from the repository directory.
@@ -147,6 +235,8 @@ Alternatively, individual users can place the executable in a personal `bin` dir
 `tsviewer` is a graphical GTK3 application and therefore requires a graphical display environment.
 
 On Linux systems it is intended for use under a normal X11 or compatible GTK desktop environment.
+
+On Windows it runs as an ordinary desktop application, provided the GTK3 DLLs built alongside it remain in the same directory as `tsviewer.exe`.
 
 When running on a remote machine through SSH, graphical forwarding must be configured if the display is to appear on the local workstation.
 

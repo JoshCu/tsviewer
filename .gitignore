@@ -4,3 +4,9 @@ tsviewer
 *.swp
 core
 core.*
+
+# Windows cross-compilation artifacts
+tsviewer.exe
+dist-windows/
+win32/
+*.zip
