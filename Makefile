@@ -13,9 +13,8 @@ $(TARGET): $(SRC)
 clean:
 	rm -f $(TARGET) *.o
 
-# Optional Windows cross-compilation: "make windows", "make windows-zip" and
-# "make windows-installer".  Everything those need lives in the windows
-# directory, and nothing here depends on it being present.
+# Optional Windows cross-compilation: "make windows-zip".  Everything it needs
+# lives in the windows directory, and nothing here depends on it being present.
 -include windows/windows.mk
 
 .PHONY: all clean

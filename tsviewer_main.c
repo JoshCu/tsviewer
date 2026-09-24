@@ -20,7 +20,7 @@
 
 #ifdef _WIN32
 /* timegm(), strptime() and a few GTK prototypes the Windows GTK3 bundle is
-   missing; see windows/README.md.  Not compiled on Linux. */
+   missing.  Not compiled on Linux. */
 #include "windows/tsviewer_win32_compat.h"
 #endif
 

@@ -6,9 +6,6 @@ core
 core.*
 
 # Windows cross-compilation artifacts
-windows/*.exe
 windows/win32/
-windows/dist/
 windows/tsviewer-*-win64/
-*.zip
-tsviewer-*-setup.exe
+tsviewer-*-win64.zip

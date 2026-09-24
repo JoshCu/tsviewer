@@ -17,7 +17,7 @@ Building `tsviewer` requires:
 
 GTK3 normally brings in Cairo and the other graphical libraries required by the application.
 
-These are the requirements for building on Linux. Building a Windows executable is described separately under **Windows** below.
+These are the requirements for building on Linux. On Windows nothing needs to be built; see **Windows** below.
 
 ## Linux
 
@@ -128,87 +128,60 @@ make
 
 ## Windows
 
-A Windows executable is produced by cross-compiling on Linux with the mingw-w64 toolchain. There is no native Windows build procedure; the `Makefile` is not intended to be run under MSYS2 or Cygwin.
+A ready-to-run Windows build is attached to each release. Nothing needs to be compiled or installed.
 
-Everything specific to Windows lives in the `windows` directory and is described in `windows/README.md`. The program source itself contains three lines of Windows-specific code.
+### Download
 
-### Cross-compilation requirements
+Download `tsviewer-<version>-win64.zip` from the releases page:
 
-In addition to GNU Make, cross-compiling requires a mingw-w64 cross compiler targeting `x86_64-w64-mingw32`, together with `wget`, `unzip` and `zip`. Building the installer additionally requires NSIS.
+https://github.com/fred-ogden/tsviewer/releases
 
-```text
-sudo apt install gcc-mingw-w64 wget unzip zip nsis                 # Debian/Ubuntu
-sudo dnf install mingw64-gcc wget unzip zip mingw32-nsis           # Fedora
-sudo zypper install mingw64-cross-gcc wget unzip zip               # openSUSE
-```
+### Unzip
 
-The GTK3 headers and DLLs for Windows are downloaded automatically and do not need to be installed on the build machine.
-
-Verify the cross compiler before building:
+Extract the zip to a permanent location, for example:
 
 ```text
-x86_64-w64-mingw32-gcc --version
+C:\Users\<you>\tsviewer-<version>-win64
 ```
 
-A version number should be printed. If the command is not found, the mingw-w64 package is either not installed or its compiler is published under a different name by the distribution.
+The folder holds `tsviewer.exe`, the GTK3 libraries it needs, and the `examples` directory. Keep the files together; `tsviewer.exe` will not start without the libraries beside it.
 
-### Build
+### Add it to your PATH
+
+1. Open the Start menu, search for **environment variables**, and choose *Edit environment variables for your account*.
+2. Under *User variables*, select `Path` and click *Edit*.
+3. Click *New* and paste the full path of the unzipped folder.
+4. Click *OK* in each window.
+
+Administrator rights are not required. Open a new command prompt afterwards; windows that were already open do not see the change.
+
+### Run
 
 ```text
-make windows
+tsviewer --help
+tsviewer data.csv
+tsviewer observed.csv model.csv
 ```
 
-The first invocation downloads a prebuilt GTK3 bundle, roughly 11 MB, into the `windows` directory. Subsequent builds reuse it.
+A console window accompanies the graphical window, so that `--help` and error messages are visible.
 
-The result is a self-contained folder, `windows/dist`, holding `tsviewer.exe`, the GTK3 runtime DLLs, the example data files and two small helper programs. `tsviewer.exe` will not start unless the DLLs are beside it, so the whole folder is what must reach the Windows machine.
+### Differences from the Linux build
 
-### Package as a single file
+A small number of stock icons in GTK dialogs may be missing. This is cosmetic.
 
-Copying that folder to a Windows machine is tedious, so it can be packaged as one file instead:
+Timestamps earlier than 1970 are not accepted in the compact `YYYYMMDDHHMM` and `YYYYMMDDHHMMSS` formats, because the Windows C library cannot represent them. All other supported abscissa formats behave identically.
+
+### Building the Windows zip
+
+This is only needed by maintainers. Publishing a GitHub release runs `.github/workflows/windows-release.yml`, which cross-compiles the zip on Linux and attaches it to the release automatically.
+
+To build it locally, install a mingw-w64 cross compiler together with `wget`, `unzip` and `zip` (on Debian/Ubuntu: `sudo apt install gcc-mingw-w64 wget unzip zip`), then run:
 
 ```text
-make windows-zip        # tsviewer-<version>-win64.zip
-make windows-installer  # tsviewer-<version>-win64-setup.exe
+make windows-zip
 ```
 
-Both are written to the top level of the repository. The version in the file names is read from `TSVIEWER_VERSION` in the source, so it cannot drift from the program.
-
-The zip is about 9 MB. Extract it anywhere and run it; nothing is installed and nothing is written to the registry, so it can live on a USB stick or a network share.
-
-The installer is about 7 MB. It requires administrator rights, installs into `C:\Program Files\tsviewer`, registers an entry in *Apps & features* for clean removal, and offers two optional components:
-
-- **Start Menu shortcuts.** A *tsviewer Command Prompt* entry that opens a command prompt with `tsviewer` already on the `PATH`, starting in the examples directory, plus a shortcut to that directory.
-- **Right-click menu.** An *Open with tsviewer* entry on `.csv`, `.dat`, `.txt` and `.tsv` files. Selecting several files and choosing it opens them together in a single window. The default program for those file types is not changed.
-
-Neither package modifies the system `PATH`; `windows/README.md` explains why, and how to add it by hand.
-
-### Releases
-
-Publishing a GitHub release runs `.github/workflows/windows-release.yml`, which performs this build and attaches both packages to the release. The same workflow can be started by hand from the Actions tab to test a build without publishing anything.
-
-### Console window
-
-The Windows executable is built as a console application, so that `--help` and error messages appear in the command prompt as they do on Linux. A console window therefore accompanies the graphical window when the program is started from the desktop rather than from a command prompt.
-
-To build a pure graphical application with no console window, at the cost of losing all `--help` and error output:
-
-```text
-make windows WIN_SUBSYSTEM=-mwindows
-```
-
-### Clean the Windows build
-
-`make clean` removes the executables, the staging folder, and any zip or installer built from them, but keeps the downloaded GTK3 bundle. To remove the bundle as well:
-
-```text
-make distclean
-```
-
-### Known differences from the Linux build
-
-The prebuilt bundle supplies no icon theme, so a small number of stock icons in GTK dialogs may be absent. This is cosmetic and does not affect plotting or any other function.
-
-Timestamps earlier than 1970 are not accepted in the compact `YYYYMMDDHHMM` and `YYYYMMDDHHMMSS` formats on Windows, because the Windows C library cannot represent them. All other supported abscissa formats behave identically to the Linux build.
+The first run downloads a prebuilt GTK3 bundle, roughly 11 MB, into the `windows` directory. Everything Windows-specific lives in that directory.
 
 ## Installation in your PATH
 
@@ -234,7 +207,7 @@ Alternatively, individual users can place the executable in a personal `bin` dir
 
 On Linux systems it is intended for use under a normal X11 or compatible GTK desktop environment.
 
-On Windows it runs as an ordinary desktop application, provided the GTK3 DLLs built alongside it remain in the same directory as `tsviewer.exe`.
+On Windows it runs as an ordinary desktop application, provided the GTK3 DLLs shipped in the zip remain in the same folder as `tsviewer.exe`.
 
 When running on a remote machine through SSH, graphical forwarding must be configured if the display is to appear on the local workstation.
 

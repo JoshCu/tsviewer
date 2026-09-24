@@ -1,70 +1,29 @@
-# Cross-compiles the Windows build and attaches it to a GitHub release.
-#
-# Runs automatically when a release is published, and can be started by hand
-# from the Actions tab (Run workflow) to test the build without releasing,
-# in which case the results are left as workflow artifacts instead.
+# Cross-compiles the Windows zip and attaches it to each published release.
 
 name: Windows release build
 
 on:
   release:
     types: [published]
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   windows:
-    name: Cross-compile for Windows
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out the source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install the cross-compilation toolchain
+      - name: Install the cross compiler
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64 nsis wget unzip zip
+          sudo apt-get install -y gcc-mingw-w64-x86-64 wget unzip zip
 
-      - name: Show toolchain versions
-        run: |
-          x86_64-w64-mingw32-gcc --version | head -1
-          makensis -VERSION
+      - name: Build the zip
+        run: make windows-zip
 
-      - name: Build the zip and the installer
-        run: make windows-zip windows-installer
-
-      - name: Check that the release tag matches TSVIEWER_VERSION
-        if: github.event_name == 'release'
-        run: |
-          version=$(sed -n 's/^#define TSVIEWER_VERSION "\(.*\)"/\1/p' tsviewer_main.c)
-          tag='${{ github.event.release.tag_name }}'
-          echo "source version: $version    release tag: $tag"
-          case "$tag" in
-            *"$version"*) ;;
-            *) echo "::warning::Release tag '$tag' does not contain TSVIEWER_VERSION '$version'." ;;
-          esac
-
-      - name: List what was built
-        run: ls -la tsviewer-*-win64.zip tsviewer-*-win64-setup.exe
-
-      # Manual runs have no release to attach to, so keep the results here
-      - name: Upload as workflow artifacts
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: tsviewer-windows
-          path: |
-            tsviewer-*-win64.zip
-            tsviewer-*-win64-setup.exe
-          if-no-files-found: error
-
-      - name: Attach to the release
-        if: github.event_name == 'release'
+      - name: Attach it to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload '${{ github.event.release.tag_name }}' \
-            tsviewer-*-win64.zip tsviewer-*-win64-setup.exe --clobber
+        run: gh release upload '${{ github.event.release.tag_name }}' tsviewer-*-win64.zip --clobber
